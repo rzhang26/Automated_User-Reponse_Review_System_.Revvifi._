@@ -14,8 +14,14 @@ def get_google_service():
     return sheets_service, forms_service
 
 def fetch_form_data(forms_service, form_id):
-    result = forms_service.forms().responses().list(formId=form_id).execute()
-    return result
+    try:
+        print("🔄 Fetching data from Google Forms API...")
+        result = forms_service.forms().responses().list(formId=form_id).execute()
+        print("📝 Google Forms API Response:", result)  # <-- Add this line
+        return result
+    except Exception as e:
+        print(f"❌ Error fetching form data: {e}")
+        return None
 
 def update_sheet(sheets_service, spreadsheet_id, data, range_name='Sheet1'):
     body = {'values': data}
