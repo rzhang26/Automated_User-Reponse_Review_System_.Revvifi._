@@ -11,6 +11,7 @@ load_dotenv()
 # Initialize Flask app
 app = Flask(__name__)
 
+
 @app.route('/')
 def health_check():
     """
@@ -18,78 +19,91 @@ def health_check():
     """
     return jsonify({"status": "success", "message": "Backend is up and running!"})
 
+
 @app.route('/process', methods=['GET'])
 def process_data():
-    sheets, forms = get_google_service()
-    form_data = fetch_form_data(forms, os.getenv('FORM_ID'))
+    """
+    Fetch form responses, analyze activities using Gemini AI,
+    calculate scores dynamically, and update Google Sheets.
+    """
+    try:
+        # Initialize Google services
+        sheets, forms = get_google_service()
+        form_data = fetch_form_data(forms, os.getenv('FORM_ID'))
 
-    # Fetch existing timestamps from Google Sheets
-    existing_timestamps = []
-    sheet_data = sheets.spreadsheets().values().get(
-        spreadsheetId=os.getenv('SPREADSHEET_ID'),
-        range='Sheet1!A:A'  # Assuming Timestamp is in Column A
-    ).execute()
+        # Fetch existing timestamps from Google Sheets
+        existing_timestamps = []
+        sheet_data = sheets.spreadsheets().values().get(
+            spreadsheetId=os.getenv('SPREADSHEET_ID'),
+            range='Sheet1!A:A'  # Assuming Timestamp is in Column A
+        ).execute()
 
-    for row in sheet_data.get('values', [])[1:]:  # Skip header
-        existing_timestamps.append(row[0])  # Collect all timestamps
+        for row in sheet_data.get('values', [])[1:]:  # Skip header
+            existing_timestamps.append(row[0])  # Collect all timestamps
 
-    processed_data = []
-    for entry in form_data.get('responses', []):
-        timestamp = entry.get('createTime', '')  # Get timestamp from form submission
-        
-        # Skip already processed timestamps
-        if timestamp in existing_timestamps:
-            print(f"🔄 Skipping already processed timestamp: {timestamp}")
-            continue
-        
-        # Extract basic data
-        name = entry.get('answers', {}).get('40836d3c', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'Unknown')
-        role = entry.get('answers', {}).get('37580eae', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'Undefined')
-        activity = entry.get('answers', {}).get('4c26168e', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'No activity')
-        
-        print(f"Role Extracted from Form: {role}")
-        print(f"Activity Data Sent to Gemini: {activity}")
+        processed_data = []
+        for entry in form_data.get('responses', []):
+            timestamp = entry.get('createTime', '')  # Get timestamp from form submission
+            
+            # Skip already processed timestamps
+            if timestamp in existing_timestamps:
+                print(f"🔄 Skipping already processed timestamp: {timestamp}")
+                continue
+            
+            # Extract basic data from form
+            name = entry.get('answers', {}).get('40836d3c', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'Unknown')
+            role = entry.get('answers', {}).get('37580eae', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'Undefined')
+            activity = entry.get('answers', {}).get('4c26168e', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'No activity')
+            
+            print(f"📝 Name: {name}")
+            print(f"🎭 Role: {role}")
+            print(f"📝 Activity Data Sent to Gemini: {activity}")
 
-        # Analyze activity with Gemini
-        metrics = analyze_activity_with_gemini(activity)
-        clients = metrics['clients']
-        volunteers = metrics['volunteers']
-        hours = metrics['hours']
-        effort = metrics['effort']
+            # Analyze activity with Gemini
+            metrics = analyze_activity_with_gemini(activity)
+            clients = metrics['clients']
+            volunteers = metrics['volunteers']
+            hours = metrics['hours']
+            effort = metrics['effort']
 
-        # Calculate score dynamically
-        result = calculate_score(
-            role=role,
-            clients=clients, 
-            volunteers=volunteers, 
-            hours=hours, 
-            effort=effort,
-            gemini_feedback=activity
-        )
-        score = result['score']
-        strike = result['strike']
-        effort_acknowledged = result['effort_acknowledged']
+            # Calculate score dynamically
+            result = calculate_score(
+                role=role,
+                clients=clients, 
+                volunteers=volunteers, 
+                hours=hours, 
+                effort=effort,
+                gemini_feedback=activity
+            )
+            score = result['score']
+            strike = result['strike']
+            effort_acknowledged = result['effort_acknowledged']
 
-        feedback = f"Clients: {clients}, Volunteers: {volunteers}, Hours: {hours}, Effort: {'Yes' if effort else 'No'}"
+            feedback = f"Clients: {clients}, Volunteers: {volunteers}, Hours: {hours}, Effort: {'Yes' if effort else 'No'}"
 
-        # Append data to Google Sheets
-        processed_data.append([
-            timestamp,
-            name,
-            role,  # Use the role directly from the Google Form
-            score,
-            "Yes" if effort else "No",
-            "Yes" if strike else "No",
-            feedback
-        ])
+            # Append data to Google Sheets
+            processed_data.append([
+                timestamp,
+                name,
+                role,  # Directly use the extracted role
+                score,
+                "Yes" if effort else "No",
+                "Yes" if strike else "No",
+                feedback
+            ])
 
-    if processed_data:
-        update_sheet(sheets, os.getenv('SPREADSHEET_ID'), processed_data)
-        print("✅ New submissions processed and added to Google Sheets.")
-    else:
-        print("🔄 No new submissions found to process.")
+        if processed_data:
+            update_sheet(sheets, os.getenv('SPREADSHEET_ID'), processed_data)
+            print("✅ New submissions processed and added to Google Sheets.")
+        else:
+            print("🔄 No new submissions found to process.")
 
-    return jsonify({"status": "success", "message": "New submissions processed successfully"})
+        return jsonify({"status": "success", "message": "New submissions processed successfully"})
+
+    except Exception as e:
+        print(f"❌ An error occurred: {e}")
+        return jsonify({"status": "error", "message": str(e)})
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
