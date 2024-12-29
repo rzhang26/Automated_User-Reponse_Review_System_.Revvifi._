@@ -23,12 +23,48 @@ def fetch_form_data(forms_service, form_id):
         print(f"❌ Error fetching form data: {e}")
         return None
 
-def update_sheet(sheets_service, spreadsheet_id, data, range_name='Sheet1'):
-    body = {'values': data}
-    result = sheets_service.spreadsheets().values().update(
+# def update_sheet(sheets_service, spreadsheet_id, data, range_name='Sheet1'):
+#     body = {'values': data}
+#     result = sheets_service.spreadsheets().values().update(
+#         spreadsheetId=spreadsheet_id,
+#         range=range_name,
+#         valueInputOption='RAW',
+#         body=body
+#     ).execute()
+#     return result
+
+# def update_sheet(sheets, spreadsheet_id, data):
+#     """
+#     Append data to Google Sheets without overwriting.
+#     """
+#     if isinstance(data, list):
+#         sheets.spreadsheets().values().append(
+#             spreadsheetId=spreadsheet_id,
+#             range='Sheet1!A:H',
+#             valueInputOption='USER_ENTERED',
+#             insertDataOption='INSERT_ROWS',
+#             body={'values': data}
+#         ).execute()
+#     else:
+#         raise ValueError("Data passed to update_sheet must be a list of lists.")
+
+
+
+def update_sheet(sheets, spreadsheet_id, data):
+    """
+    Append data to Google Sheets without overwriting.
+    """
+    if not isinstance(data, list):
+        raise ValueError("❌ Data passed to update_sheet must be a list of lists.")
+
+    google_values = sheets.spreadsheets().values()
+    if not hasattr(google_values, 'append'):
+        raise AttributeError("❌ Google Sheets API 'values' object does not have 'append' method.")
+
+    google_values.append(
         spreadsheetId=spreadsheet_id,
-        range=range_name,
-        valueInputOption='RAW',
-        body=body
+        range='Sheet1!A:H',
+        valueInputOption='USER_ENTERED',
+        insertDataOption='INSERT_ROWS',
+        body={'values': data}
     ).execute()
-    return result

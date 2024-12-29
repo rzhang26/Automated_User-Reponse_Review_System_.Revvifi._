@@ -15,29 +15,29 @@ def calculate_score(role, clients=0, volunteers=0, hours=0, effort=False, gemini
     """
     try:
         score = 0
-        strike = False
+        strike = False  # Initialize strike to False
         effort_acknowledged = effort
 
         if role == "Outreach & Social Media":
             score = (clients * 3) + (volunteers * 5)
-            if clients == 0 and volunteers == 0 and effort:
-                return {"score": 0, "strike": False, "effort_acknowledged": True}
+            if clients == 0 and volunteers == 0 and not effort: 
+                strike = True  # Set strike to True if no clients/volunteers and no effort
 
         elif role == "Developer":
             score = hours
-            if hours == 0 and effort:
-                score += 1
+            if hours == 0 and not effort: 
+                strike = True  # Set strike to True if no hours worked and no effort
 
         return {
             "score": max(score, 0),
-            "strike": False,
+            "strike": strike, 
             "effort_acknowledged": effort_acknowledged
         }
 
     except Exception as e:
         print(f"❌ Error in scoring logic: {e}")
         return {"score": 0, "strike": True, "effort_acknowledged": False}
-
+    
 # # Testing the Scoring Logic
 # if __name__ == "__main__":
 #     print("🧮 Testing Scoring Logic:")
