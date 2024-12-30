@@ -1,3 +1,4 @@
+
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
@@ -100,12 +101,3 @@ def analyze_activity_with_gemini(activity_data):
     except Exception as e:
         print(f"❌ Error during Gemini analysis: {e}")
         return {"clients": 0, "volunteers": 0, "hours": 0, "effort": False}
-
-# #Testing the Gemini Feedback Function
-# if __name__ == "__main__":
-#     sample_data = """
-#     - Outreach Officer: Recruited 5 clients, contacted 10 potential volunteers.
-#     - Developer: Worked 15 hours on the website redesign.
-#     """
-#     feedback = analyze_activity_with_gemini(sample_data)
-#     print("📝 Gemini Feedback:\n", feedback)
