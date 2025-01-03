@@ -5,8 +5,8 @@ Description of the application (README): This application, which I’ve dubbed t
 
 Currently still underdevelopment…
 Some *features* that still need to be developed and implemented:
-Proof and evidence processing system
-Special strike notification for individuals with 1st / 2nd / 3rd offenses or strikes
-The integration of this application into another platform (preferably a more appealing UI) that can more funner display the rankings and such (with some info- like strikes- only available to execs)
-Virtual / web (not local) hosting and deployment of the application
+1) Proof and evidence processing system
+2) Special strike notification for individuals with 1st / 2nd / 3rd offenses or strikes
+3) The integration of this application into another platform (preferably a more appealing UI) that can more funner display the rankings and such (with some info- like strikes- only available to execs)
+4) Virtual / web (not local) hosting and deployment of the application
 
