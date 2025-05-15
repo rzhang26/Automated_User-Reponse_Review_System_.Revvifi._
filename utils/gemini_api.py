@@ -5,16 +5,13 @@ import os
 import json
 import re
 
-# Load environment variables
 load_dotenv()
 
-# Ensure API Key is loaded correctly
 api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
     raise ValueError("❌ GEMINI_API_KEY is not set. Please verify your .env file.")
 
-# Configure Gemini with the API Key
 genai.configure(api_key=api_key)
 
 
@@ -29,7 +26,6 @@ def clean_gemini_response(response_text):
         str: Cleaned JSON string.
     """
     try:
-        # Remove Markdown code blocks and optional 'json' label
         cleaned_text = re.sub(r'^\s*```[a-zA-Z]*\s*', '', response_text.strip())
         cleaned_text = re.sub(r'\s*```$', '', cleaned_text)
         
@@ -37,7 +33,7 @@ def clean_gemini_response(response_text):
         return cleaned_text
     except Exception as e:
         print(f"❌ Error while cleaning Gemini response: {e}")
-        return "{}"  # Return empty JSON object if cleaning fails
+        return "{}"  # bro what why empty wthijrgnerfioernfreifermfirefm
 
 
 def analyze_activity_with_gemini(activity_data):
@@ -75,15 +71,12 @@ def analyze_activity_with_gemini(activity_data):
 
         print("🔄 Raw response from Gemini:", response.text)
 
-        # Clean the response text
         cleaned_text = clean_gemini_response(response.text)
 
-        # Validate JSON format before parsing
         if not cleaned_text.startswith("{") or not cleaned_text.endswith("}"):
             print("❌ Cleaned text does not match JSON structure.")
             return {"clients": 0, "volunteers": 0, "hours": 0, "effort": False}
 
-        # Attempt to parse the response as JSON
         try:
             metrics = json.loads(cleaned_text)
             print("✅ Metrics extracted from Gemini feedback:", metrics)
