@@ -5,10 +5,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Discord Notification
+#discord bot on server de moi
 def send_discord_notification(report):
     """
     Send a Discord notification based on the report.
@@ -39,7 +38,7 @@ def send_discord_notification(report):
         print(f"❌ Error sending Discord notification: {e}")
         return False
 
-# Email Notification
+#email notif
 def send_email_notification(subject, body):
     email_host = os.getenv("EMAIL_HOST")
     email_port = int(os.getenv("EMAIL_PORT", 587))
