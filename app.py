@@ -10,10 +10,8 @@ import schedule
 import time
 import threading
 
-# Load environment variables
 load_dotenv()
 
-# Initialize Flask app
 app = Flask(__name__)
 
 
@@ -32,30 +30,28 @@ def process_data():
     calculate scores dynamically, and update Google Sheets.
     """
     try:
-        # Initialize Google services
+        
         sheets, forms = get_google_service()
         form_data = fetch_form_data(forms, os.getenv('FORM_ID'))
 
-        # Fetch existing timestamps and their corresponding rows
+        
         sheet_data = sheets.spreadsheets().values().get(
             spreadsheetId=os.getenv('SPREADSHEET_ID'),
-            range='Sheet1!A:H'  # Fetch all relevant columns
+            range='Sheet1!A:H'  
         ).execute()
 
-        existing_rows = sheet_data.get('values', [])[1:]  # Skip header row
+        existing_rows = sheet_data.get('values', [])[1:]  
         existing_timestamps = {row[0]: index + 2 for index, row in enumerate(existing_rows)}
 
-        processed_data = []  # Collect new data for appending
+        processed_data = []  
 
         for entry in form_data.get('responses', []):
-            timestamp = entry.get('createTime', '')  # Get timestamp from form submission
-            
-            # Skip already processed timestamps
+            timestamp = entry.get('createTime', '')  
+           
             if timestamp in existing_timestamps:
                 print(f"🔄 Skipping already processed timestamp: {timestamp}")
                 continue
             
-            # Extract basic data from form
             name = entry.get('answers', {}).get('40836d3c', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'Unknown')
             role = entry.get('answers', {}).get('37580eae', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'Undefined')
             activity = entry.get('answers', {}).get('4c26168e', {}).get('textAnswers', {}).get('answers', [{}])[0].get('value', 'No activity')
@@ -64,14 +60,12 @@ def process_data():
             print(f"🎭 Role: {role}")
             print(f"📝 Activity Data Sent to Gemini: {activity}")
 
-            # Analyze activity with Gemini
             metrics = analyze_activity_with_gemini(activity)
             clients = metrics['clients']
             volunteers = metrics['volunteers']
             hours = metrics['hours']
             effort = metrics['effort']
 
-            # Calculate score dynamically
             result = calculate_score(
                 role=role,
                 clients=clients, 
@@ -90,7 +84,6 @@ def process_data():
                 f"Effort: {'Yes' if effort else 'No'}"
             )
 
-            # Append new data to the processed_data list
             processed_data.append([
                 timestamp,
                 name,
@@ -98,7 +91,7 @@ def process_data():
                 score,
                 "Yes" if effort else "No",
                 "Yes" if strike else "No",
-                "No",  # Default Strike Notified value
+                "No",  # DEfault val
                 feedback_summary
             ])
 
@@ -135,43 +128,37 @@ def send_strike_report():
             range='Sheet1!A:H'
         ).execute()
 
-        rows = sheet_data.get('values', [])[1:]  # Skip header row
+        rows = sheet_data.get('values', [])[1:] 
 
-        # Track already processed timestamps to prevent double processing
         processed_timestamps = set()
 
         for index, row in enumerate(rows):
             try:
-                # Safeguard against IndexError if row has fewer columns
                 if len(row) < 8:
                     continue
 
                 timestamp, name, role, score, effort, strike, notified, feedback = row[0:8]
 
-                # Skip if already processed in the current run
                 if timestamp in processed_timestamps:
                     continue
 
                 if strike == "Yes" and notified != "Yes":
-                    # Send Discord notification for new strikes
                     message = f"🚨 **New Strike Alert**:\n- **Name:** {name}\n- **Role:** {role}\n- **Score:** {score}\n- **Effort:** {effort}"
                     send_discord_notification({"report": message, "has_strikes": True})
                     print(f"✅ Notification sent for strike detected: {name}")
                     
-                    # Update 'Strike Notified' column
                     google_values = sheets.spreadsheets().values()
                     if not hasattr(google_values, 'update'):
                         raise AttributeError("❌ Google Sheets API 'values' object does not have an 'update' method.")
 
                     google_values.update(
                         spreadsheetId=os.getenv('SPREADSHEET_ID'),
-                        range=f"Sheet1!G{index + 2}",  # Column G for 'Strike Notified'
+                        range=f"Sheet1!G{index + 2}",  # Coloumn G for a "Strike Notified"
                         valueInputOption='USER_ENTERED',
                         body={'values': [["Yes"]]}
                     ).execute()
                     print(f"✅ Strike notified updated for: {name}")
                     
-                    # Add timestamp to the processed set
                     processed_timestamps.add(timestamp)
 
             except (ValueError, IndexError) as e:
@@ -356,7 +343,7 @@ if __name__ == '__main__':
     # instead, it appends to the sheets a version of the same 
     # already-processed data but now with the strike notified value as yes  
 
-# ---------------------_||||||||||
+# ---------------------_||||||||||efwfjrf rwj vv nerocknrm jier jjo omo
 
 
 
