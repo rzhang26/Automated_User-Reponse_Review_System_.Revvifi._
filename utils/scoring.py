@@ -15,18 +15,18 @@ def calculate_score(role, clients=0, volunteers=0, hours=0, effort=False, gemini
     """
     try:
         score = 0
-        strike = False  # Initialize strike to False
+        strike = False  # DEfault Val
         effort_acknowledged = effort
 
         if role == "Outreach & Social Media":
             score = (clients * 3) + (volunteers * 5)
             if clients == 0 and volunteers == 0 and not effort: 
-                strike = True  # Set strike to True if no clients/volunteers and no effort
+                strike = True  
 
         elif role == "Developer":
             score = hours
             if hours == 0 and not effort: 
-                strike = True  # Set strike to True if no hours worked and no effort
+                strike = True  
 
         return {
             "score": max(score, 0),
